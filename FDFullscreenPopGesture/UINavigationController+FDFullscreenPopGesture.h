@@ -22,6 +22,8 @@
 
 #import <UIKit/UIKit.h>
 
+typedef BOOL (^_FDGestureRecognizerShouldBeginBlock)(UIPanGestureRecognizer *gestureRecognizer);
+
 /// "UINavigation+FDFullscreenPopGesture" extends UINavigationController's swipe-
 /// to-pop behavior in iOS 7+ by supporting fullscreen pan gesture. Instead of
 /// screen edge, you can now swipe from any place on the screen and the onboard
@@ -58,5 +60,7 @@
 /// Max allowed initial distance to left edge when you begin the interactive pop
 /// gesture. 0 by default, which means it will ignore this limit.
 @property (nonatomic, assign) CGFloat fd_interactivePopMaxAllowedInitialDistanceToLeftEdge;
+
+@property (nonatomic, copy) _FDGestureRecognizerShouldBeginBlock fd_swipeToPopGestureRecognizerShouldBeginBlock;
 
 @end

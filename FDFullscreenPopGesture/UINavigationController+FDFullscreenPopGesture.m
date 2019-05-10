@@ -26,6 +26,7 @@
 @interface _FDFullscreenPopGestureRecognizerDelegate : NSObject <UIGestureRecognizerDelegate>
 
 @property (nonatomic, weak) UINavigationController *navigationController;
+@property (nonatomic, copy) _FDGestureRecognizerShouldBeginBlock fd_gestureRecognizerShouldBeginBlock;
 
 @end
 
@@ -62,6 +63,10 @@
     CGFloat multiplier = isLeftToRight ? 1 : - 1;
     if ((translation.x * multiplier) <= 0) {
         return NO;
+    }
+
+    if (self.fd_gestureRecognizerShouldBeginBlock) {
+        return self.fd_gestureRecognizerShouldBeginBlock(gestureRecognizer);
     }
     
     return YES;
@@ -163,7 +168,16 @@ typedef void (^_FDViewControllerWillAppearInjectBlock)(UIViewController *viewCon
         NSArray *internalTargets = [self.interactivePopGestureRecognizer valueForKey:@"targets"];
         id internalTarget = [internalTargets.firstObject valueForKey:@"target"];
         SEL internalAction = NSSelectorFromString(@"handleNavigationTransition:");
-        self.fd_fullscreenPopGestureRecognizer.delegate = self.fd_popGestureRecognizerDelegate;
+
+        _FDFullscreenPopGestureRecognizerDelegate *delegate = self.fd_popGestureRecognizerDelegate;
+        delegate.fd_gestureRecognizerShouldBeginBlock = ^BOOL(UIPanGestureRecognizer *gestureRecognizer) {
+            if (viewController.fd_swipeToPopGestureRecognizerShouldBeginBlock) {
+                return viewController.fd_swipeToPopGestureRecognizerShouldBeginBlock(gestureRecognizer);
+            }
+            return YES;
+        };
+
+        self.fd_fullscreenPopGestureRecognizer.delegate = delegate;
         [self.fd_fullscreenPopGestureRecognizer addTarget:internalTarget action:internalAction];
         
         // Disable the onboard gesture recognizer.
@@ -283,6 +297,14 @@ typedef void (^_FDViewControllerWillAppearInjectBlock)(UIViewController *viewCon
 {
     SEL key = @selector(fd_interactivePopMaxAllowedInitialDistanceToLeftEdge);
     objc_setAssociatedObject(self, key, @(MAX(0, distance)), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (_FDGestureRecognizerShouldBeginBlock)fd_swipeToPopGestureRecognizerShouldBeginBlock {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setFd_swipeToPopGestureRecognizerShouldBeginBlock:(_FDGestureRecognizerShouldBeginBlock)block {
+    objc_setAssociatedObject(self, @selector(fd_swipeToPopGestureRecognizerShouldBeginBlock), block, OBJC_ASSOCIATION_COPY_NONATOMIC);
 }
 
 @end
